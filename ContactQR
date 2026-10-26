@@ -1,0 +1,549 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>QR Contacto</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: una sola columna tipo app. Selector Datos / Código arriba; la tarjeta blanca del QR es la pieza central. */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FFFFFF;
+  --ink: #12161C;
+  --muted: #5A6573;
+  --line: #D3D9E0;
+  --accent: #0A7A5C;
+  --on-accent: #FFFFFF;
+  --danger: #B3261E;
+  --qr-paper: #FFFFFF;
+  --qr-ink: #0F1318;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1318;
+    --surface: #181D24;
+    --ink: #EAEEF2;
+    --muted: #9AA5B1;
+    --line: #2A323C;
+    --accent: #3DDC97;
+    --on-accent: #08261A;
+    --danger: #FF8A80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1318;
+  --surface: #181D24;
+  --ink: #EAEEF2;
+  --muted: #9AA5B1;
+  --line: #2A323C;
+  --accent: #3DDC97;
+  --on-accent: #08261A;
+  --danger: #FF8A80;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  z-index: 10;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+header h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+header p { margin: 0; color: var(--muted); font-size: 15px; max-width: 46ch; }
+
+.seg-bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--bg);
+  padding-block: 6px;
+}
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 3px;
+  gap: 3px;
+}
+.seg button {
+  font: 600 15px var(--font-body);
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  border-left: 3px solid var(--accent);
+  padding: 2px 0 2px 12px;
+  margin: 0;
+}
+
+form { display: flex; flex-direction: column; gap: 26px; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+legend {
+  padding: 0 0 12px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2px;
+  float: left;
+}
+legend + * { clear: both; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-size: 14px; font-weight: 500; }
+input, textarea {
+  font: 400 16px var(--font-body);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+}
+textarea { resize: vertical; min-height: 84px; }
+::placeholder { color: var(--muted); opacity: 0.7; }
+
+.btn {
+  font: 600 16px var(--font-body);
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  width: 100%;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.link {
+  background: none; border: 0; color: var(--muted); min-height: 44px;
+  text-decoration: underline; text-underline-offset: 3px; font-weight: 500;
+}
+.actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* QR */
+.qr-card {
+  background: var(--qr-paper);
+  color: var(--qr-ink);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 20px 16px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.qr-card img { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 1; -webkit-touch-callout: default; }
+.qr-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-align: center; margin: 0; text-wrap: balance; }
+.qr-sub { font-size: 14px; color: #4B5563; margin: -6px 0 0; text-align: center; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip {
+  font: 400 12px var(--font-mono);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+.hint { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
+.warn { color: var(--danger); }
+
+.empty {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 20px; margin-bottom: 6px; }
+
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.steps li::marker { color: var(--accent); font-weight: 700; }
+h2 { font-family: var(--font-display); font-size: 18px; margin: 0 0 10px; }
+
+details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+summary { cursor: pointer; padding: 14px; font-weight: 500; min-height: 48px; }
+details textarea {
+  border: 0; border-top: 1px solid var(--line); border-radius: 0 0 10px 10px;
+  font: 400 13px/1.5 var(--font-mono); min-height: 190px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--qr-paper);
+  color: var(--qr-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: max(20px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.overlay img { width: min(100%, 78vh, 560px); height: auto; aspect-ratio: 1; display: block; }
+.overlay .btn { max-width: 320px; background: #12161C; border-color: #12161C; color: #fff; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  max-width: calc(100vw - 32px);
+  z-index: 60;
+  transition: opacity 0.2s;
+}
+.toast[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Tu contacto en un QR</h1>
+    <p>Cargá tus datos, mostrá el código y el otro celular guarda tu contacto al escanearlo con la cámara.</p>
+  </header>
+
+  <div class="seg-bar">
+    <div class="seg" role="tablist" aria-label="Secciones">
+      <button type="button" role="tab" id="tab-datos" aria-selected="true" aria-controls="view-datos">Datos</button>
+      <button type="button" role="tab" id="tab-qr" aria-selected="false" aria-controls="view-qr">Código QR</button>
+    </div>
+  </div>
+
+  <!-- DATOS -->
+  <section id="view-datos" role="tabpanel" aria-labelledby="tab-datos">
+    <form id="form" autocomplete="on" novalidate>
+      <p class="note" id="sample-note">Estos son datos de ejemplo. Reemplazalos con los tuyos.</p>
+
+      <fieldset>
+        <legend>Persona</legend>
+        <div class="row">
+          <div class="field"><label for="f-nombre">Nombre</label><input id="f-nombre" type="text" autocomplete="given-name" placeholder="Lucía"></div>
+          <div class="field"><label for="f-apellido">Apellido</label><input id="f-apellido" type="text" autocomplete="family-name" placeholder="Fernández"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="f-empresa">Empresa</label><input id="f-empresa" type="text" autocomplete="organization" placeholder="Opcional"></div>
+          <div class="field"><label for="f-cargo">Cargo</label><input id="f-cargo" type="text" autocomplete="organization-title" placeholder="Opcional"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cómo contactarte</legend>
+        <div class="row">
+          <div class="field"><label for="f-movil">Celular</label><input id="f-movil" type="tel" inputmode="tel" autocomplete="tel" placeholder="+54 9 11 5555 0142"></div>
+          <div class="field"><label for="f-trabajo">Teléfono fijo</label><input id="f-trabajo" type="tel" inputmode="tel" placeholder="Opcional"></div>
+        </div>
+        <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com"></div>
+        <div class="field"><label for="f-web">Sitio web</label><input id="f-web" type="url" inputmode="url" autocomplete="url" placeholder="https://"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Más datos</legend>
+        <div class="field"><label for="f-calle">Dirección</label><input id="f-calle" type="text" autocomplete="street-address" placeholder="Calle y número"></div>
+        <div class="field"><label for="f-ciudad">Ciudad y provincia</label><input id="f-ciudad" type="text" autocomplete="address-level2" placeholder="Opcional"></div>
+        <div class="field"><label for="f-nota">Nota</label><textarea id="f-nota" placeholder="Horarios, especialidad, etc. Cuanto más texto, más denso el QR."></textarea></div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="btn" id="btn-ver">Generar código QR</button>
+        <button type="button" class="btn link" id="btn-limpiar">Borrar todos los datos</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- QR -->
+  <section id="view-qr" role="tabpanel" aria-labelledby="tab-qr" hidden>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div id="qr-empty" class="empty" hidden>
+        <strong>Falta tu nombre</strong>
+        Completá al menos el nombre o el apellido en la pestaña Datos para generar el código.
+      </div>
+
+      <div id="qr-ready" style="display:flex;flex-direction:column;gap:20px">
+        <div class="qr-card">
+          <img id="qr-img" alt="Código QR con los datos del contacto">
+          <p class="qr-name" id="qr-name"></p>
+          <p class="qr-sub" id="qr-sub"></p>
+          <div class="chips" id="qr-chips"></div>
+        </div>
+        <p class="hint" id="qr-hint">Mantené presionado el código para guardarlo como imagen.</p>
+
+        <div class="actions">
+          <button type="button" class="btn" id="btn-full">Mostrar en pantalla completa</button>
+          <button type="button" class="btn ghost" id="btn-copy">Copiar datos del contacto</button>
+        </div>
+
+        <div>
+          <h2>En el otro celular</h2>
+          <ol class="steps">
+            <li>Abrí la cámara y apuntá al código. Funciona en iPhone y en Android.</li>
+            <li>Tocá el aviso que aparece con tu nombre.</li>
+            <li>Elegí guardar el contacto.</li>
+          </ol>
+        </div>
+
+        <details id="vc-details">
+          <summary>Ver datos del contacto (vCard)</summary>
+          <textarea id="vcard-out" readonly spellcheck="false" aria-label="Texto vCard del contacto"></textarea>
+        </details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay" hidden role="dialog" aria-label="Código QR en pantalla completa">
+  <img id="overlay-img" alt="Código QR en pantalla completa">
+  <button type="button" class="btn" id="btn-close">Cerrar</button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+  var IDS = ['nombre','apellido','empresa','cargo','movil','trabajo','email','web','calle','ciudad','nota'];
+  var SAMPLE = {
+    nombre: 'Lucía', apellido: 'Fernández', empresa: 'Estudio Fernández & Asoc.', cargo: 'Arquitecta',
+    movil: '+54 9 11 5555 0142', trabajo: '', email: 'lucia@ejemplo.com.ar', web: 'https://ejemplo.com.ar',
+    calle: 'Av. Hipólito Yrigoyen 1234', ciudad: 'Lanús, Buenos Aires', nota: ''
+  };
+  var KEY = 'qr-contacto-v1';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var d = JSON.parse(raw); if (d && typeof d === 'object') return d; }
+    } catch (e) {}
+    return Object.assign({}, SAMPLE);
+  }
+  function save(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {} }
+
+  function read() {
+    var d = {};
+    IDS.forEach(function (k) { d[k] = $('f-' + k).value.trim(); });
+    return d;
+  }
+  function isSample(d) { return IDS.every(function (k) { return (d[k] || '') === SAMPLE[k]; }); }
+
+  function esc(s) {
+    return s.replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+  }
+  function tel(s) {
+    var plus = s.trim().charAt(0) === '+';
+    var digits = s.replace(/\D/g, '');
+    return digits ? (plus ? '+' : '') + digits : '';
+  }
+  function fixUrl(s) { return /^https?:\/\//i.test(s) ? s : 'https://' + s; }
+
+  function buildVCard(d) {
+    var full = [d.nombre, d.apellido].filter(Boolean).join(' ');
+    var L = ['BEGIN:VCARD', 'VERSION:3.0'];
+    L.push('N:' + esc(d.apellido) + ';' + esc(d.nombre) + ';;;');
+    L.push('FN:' + esc(full));
+    if (d.empresa) L.push('ORG:' + esc(d.empresa));
+    if (d.cargo) L.push('TITLE:' + esc(d.cargo));
+    if (tel(d.movil)) L.push('TEL;TYPE=CELL:' + tel(d.movil));
+    if (tel(d.trabajo)) L.push('TEL;TYPE=WORK,VOICE:' + tel(d.trabajo));
+    if (d.email) L.push('EMAIL;TYPE=INTERNET:' + esc(d.email));
+    if (d.web) L.push('URL:' + fixUrl(d.web));
+    if (d.calle || d.ciudad) L.push('ADR;TYPE=WORK:;;' + esc(d.calle) + ';' + esc(d.ciudad) + ';;;');
+    if (d.nota) L.push('NOTE:' + esc(d.nota));
+    L.push('END:VCARD');
+    return L.join('\n');
+  }
+
+  function makeQR(text) {
+    if (!window.qrcode) return null;
+    qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+    var levels = ['M', 'L'];
+    for (var i = 0; i < levels.length; i++) {
+      try {
+        var q = qrcode(0, levels[i]);
+        q.addData(text);
+        q.make();
+        return { q: q, level: levels[i] };
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  function toPng(q) {
+    var n = q.getModuleCount(), m = 12, quiet = 4;
+    var size = (n + quiet * 2) * m;
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    var x = c.getContext('2d');
+    var cs = getComputedStyle(document.documentElement);
+    x.fillStyle = cs.getPropertyValue('--qr-paper').trim() || '#fff';
+    x.fillRect(0, 0, size, size);
+    x.fillStyle = cs.getPropertyValue('--qr-ink').trim() || '#000';
+    for (var r = 0; r < n; r++) {
+      for (var k = 0; k < n; k++) {
+        if (q.isDark(r, k)) x.fillRect((k + quiet) * m, (r + quiet) * m, m, m);
+      }
+    }
+    return c.toDataURL('image/png');
+  }
+
+  var currentVCard = '';
+
+  function render() {
+    var d = read();
+    save(d);
+    $('sample-note').hidden = !isSample(d);
+
+    var hasName = d.nombre || d.apellido;
+    var empty = $('qr-empty'), ready = $('qr-ready');
+    if (!hasName) { empty.hidden = false; ready.hidden = true; currentVCard = ''; return; }
+
+    currentVCard = buildVCard(d);
+    var res = makeQR(currentVCard);
+    if (!res) {
+      empty.hidden = false; ready.hidden = true;
+      empty.querySelector('strong').textContent = 'Hay demasiado texto';
+      empty.lastChild.textContent = 'Los datos no entran en un QR. Acortá la nota o la dirección.';
+      return;
+    }
+    empty.querySelector('strong').textContent = 'Falta tu nombre';
+    empty.lastChild.textContent = 'Completá al menos el nombre o el apellido en la pestaña Datos para generar el código.';
+    empty.hidden = true; ready.hidden = false;
+
+    var url = toPng(res.q);
+    $('qr-img').src = url;
+    $('overlay-img').src = url;
+    $('qr-name').textContent = [d.nombre, d.apellido].filter(Boolean).join(' ');
+    $('qr-sub').textContent = [d.cargo, d.empresa].filter(Boolean).join(' · ');
+    $('qr-sub').hidden = !$('qr-sub').textContent;
+    $('vcard-out').value = currentVCard;
+
+    var n = res.q.getModuleCount(), version = (n - 17) / 4;
+    var dense = version >= 10;
+    var chips = $('qr-chips');
+    chips.textContent = '';
+    ['vCard 3.0', 'QR versión ' + version, 'corrección ' + res.level].forEach(function (t) {
+      var s = document.createElement('span'); s.className = 'chip'; s.textContent = t; chips.appendChild(s);
+    });
+    var hint = $('qr-hint');
+    if (dense) {
+      hint.className = 'hint warn';
+      hint.textContent = 'El código tiene mucho detalle y puede costar escanearlo. Quitá la nota o la dirección para simplificarlo.';
+    } else {
+      hint.className = 'hint';
+      hint.textContent = 'Mantené presionado el código para guardarlo como imagen.';
+    }
+  }
+
+  function setTab(name) {
+    var qr = name === 'qr';
+    $('view-datos').hidden = qr;
+    $('view-qr').hidden = !qr;
+    $('tab-datos').setAttribute('aria-selected', String(!qr));
+    $('tab-qr').setAttribute('aria-selected', String(qr));
+    if (qr) render();
+    window.scrollTo(0, 0);
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+    try {
+      $('vc-details').open = true;
+      var ta = $('vcard-out'); ta.focus(); ta.select();
+      return document.execCommand('copy');
+    } catch (e) { return false; }
+  }
+
+  // init
+  var init = load();
+  IDS.forEach(function (k) {
+    var el = $('f-' + k);
+    el.value = init[k] || '';
+    el.addEventListener('input', render);
+  });
+  $('form').addEventListener('submit', function (e) { e.preventDefault(); });
+
+  $('tab-datos').addEventListener('click', function () { setTab('datos'); });
+  $('tab-qr').addEventListener('click', function () { setTab('qr'); });
+  $('btn-ver').addEventListener('click', function () { setTab('qr'); });
+  $('btn-limpiar').addEventListener('click', function () {
+    IDS.forEach(function (k) { $('f-' + k).value = ''; });
+    render();
+    $('f-nombre').focus();
+    toast('Datos borrados');
+  });
+  $('btn-full').addEventListener('click', function () { $('overlay').hidden = false; });
+  $('btn-close').addEventListener('click', function () { $('overlay').hidden = true; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') $('overlay').hidden = true; });
+  $('btn-copy').addEventListener('click', async function () {
+    if (!currentVCard) return;
+    var ok = await copyText(currentVCard);
+    toast(ok ? 'Datos copiados' : 'No se pudo copiar. Seleccioná el texto y copialo.');
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
